@@ -18,6 +18,11 @@
     width: 100vw; height: 100vh;
     z-index: 0;
     pointer-events: none;
+    overflow: hidden;
+  }
+  #canvas-container spline-viewer {
+    width: 100%;
+    height: 100%;
   }
   #content {
     position: relative;
@@ -35,7 +40,7 @@
     padding: 4rem;
     text-align: center;
     opacity: 0;
-    transition: opacity 0.6s;
+    transition: opacity 0.8s;
   }
   .step.visible { opacity: 1; }
 
@@ -44,6 +49,7 @@
     font-weight: 700;
     letter-spacing: -0.02em;
     line-height: 1.1;
+    text-shadow: 0 0 60px rgba(0,0,0,0.8);
   }
   .step h2 {
     font-size: clamp(1.5rem, 3vw, 3rem);
@@ -53,17 +59,19 @@
   }
   .step p {
     font-size: clamp(1rem, 1.5vw, 1.25rem);
-    color: rgba(255,255,255,0.7);
+    color: rgba(255,255,255,0.8);
     max-width: 600px;
     margin-top: 1rem;
     line-height: 1.6;
+    text-shadow: 0 0 30px rgba(0,0,0,0.6);
   }
   .step .subtitle {
     font-size: clamp(0.75rem, 1vw, 0.875rem);
     text-transform: uppercase;
     letter-spacing: 0.2em;
-    color: rgba(255,255,255,0.4);
+    color: rgba(255,255,255,0.6);
     margin-bottom: 0.75rem;
+    text-shadow: 0 0 20px rgba(0,0,0,0.5);
   }
   .step .highlight { color: #f59e0b; }
 
@@ -73,7 +81,7 @@
     left: 50%;
     transform: translateX(-50%);
     font-size: 0.7rem;
-    color: rgba(255,255,255,0.25);
+    color: rgba(255,255,255,0.35);
     letter-spacing: 0.25em;
     animation: bounce 2.5s infinite;
   }
@@ -81,8 +89,6 @@
     0%,100% { transform: translateX(-50%) translateY(0); }
     50% { transform: translateX(-50%) translateY(10px); }
   }
-
-  #step-1 h2, #step-2 h2 { text-shadow: 0 0 60px rgba(245,158,11,0.15); }
 
   #step-3 {
     background: linear-gradient(to top, rgba(5,8,12,1) 20%, transparent 60%);
@@ -107,7 +113,7 @@
   .factory-grid img:hover { opacity: 1; transform: scale(1.02); }
 
   #step-4 {
-    background: rgba(5,8,12,0.9);
+    background: rgba(5,8,12,0.92);
   }
   .product-grid {
     display: grid;
@@ -163,7 +169,7 @@
     align-items: center;
     opacity: 0;
   }
-  #footer-step p { font-size: 0.7rem; color: rgba(255,255,255,0.2); }
+  #footer-step p { font-size: 0.7rem; color: rgba(255,255,255,0.25); }
 
   @media (max-width: 768px) {
     .step { padding: 2rem; }
@@ -176,13 +182,15 @@
 </head>
 <body>
 
-<div id="canvas-container"></div>
+<div id="canvas-container">
+  <spline-viewer url="https://my.spline.design/nexbotrobotcharacterconcept-s2vrr5vfpOB2SvSPmvw4eySw/"></spline-viewer>
+</div>
 
 <div id="content">
   <section class="step" id="step-0" style="justify-content:flex-end; padding-bottom:20vh;">
     <p class="subtitle">Anjubiz</p>
     <h1>China Product<br><span class="highlight">Sourcing Hub</span></h1>
-    <p style="max-width:480px;">We discover useful China-made products for retailers, wholesalers, and online sellers worldwide.</p>
+    <p>We discover useful China-made products for retailers, wholesalers, and online sellers worldwide.</p>
     <div class="scroll-hint">↓ SCROLL</div>
   </section>
 
@@ -264,289 +272,14 @@
   </section>
 </div>
 
-<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script type="module" src="https://unpkg.com/@splinetool/viewer@1.9.82/build/spline-viewer.js"></script>
+
 <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js"></script>
 
 <script>
-// ──────── Scene Setup ────────
-const container = document.getElementById('canvas-container');
-const scene = new THREE.Scene();
-const camera = new THREE.PerspectiveCamera(40, window.innerWidth / window.innerHeight, 0.1, 200);
-camera.position.set(0, 0.3, 3.5);
-
-const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: false });
-renderer.setSize(window.innerWidth, window.innerHeight);
-renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-renderer.toneMapping = THREE.ACESFilmicToneMapping;
-renderer.toneMappingExposure = 1.0;
-renderer.outputEncoding = THREE.sRGBEncoding;
-container.appendChild(renderer.domElement);
-
-// ──────── Lights ────────
-const ambient = new THREE.AmbientLight(0x222244, 0.6);
-scene.add(ambient);
-const sun = new THREE.DirectionalLight(0xffeedd, 1.8);
-sun.position.set(5, 3, 8);
-scene.add(sun);
-const fill = new THREE.DirectionalLight(0x4488ff, 0.4);
-fill.position.set(-4, -1, -3);
-scene.add(fill);
-const rim = new THREE.DirectionalLight(0x8888ff, 0.3);
-rim.position.set(-2, 4, -5);
-scene.add(rim);
-
-// ──────── Earth ────────
-const EARTH_RADIUS = 1;
-const textureLoader = new THREE.TextureLoader();
-
-const earthMap = textureLoader.load('earth-texture.png');
-const earthMat = new THREE.MeshPhongMaterial({
-  map: earthMap,
-  specular: new THREE.Color(0x222244),
-  shininess: 25,
-  emissive: new THREE.Color(0x000022),
-  emissiveIntensity: 0.05,
-});
-const earth = new THREE.Mesh(new THREE.SphereGeometry(EARTH_RADIUS, 96, 96), earthMat);
-scene.add(earth);
-
-// ── Atmosphere glow ──
-const atmMat = new THREE.ShaderMaterial({
-  vertexShader: `
-    varying vec3 vNormal;
-    void main() {
-      vNormal = normalize(normalMatrix * normal);
-      gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
-    }
-  `,
-  fragmentShader: `
-    varying vec3 vNormal;
-    void main() {
-      float intensity = pow(0.72 - dot(vNormal, vec3(0.0, 0.0, 1.0)), 2.5);
-      gl_FragColor = vec4(0.3, 0.6, 1.0, intensity * 0.6);
-    }
-  `,
-  side: THREE.FrontSide,
-  blending: THREE.AdditiveBlending,
-  transparent: true,
-});
-const atmosphere = new THREE.Mesh(new THREE.SphereGeometry(EARTH_RADIUS * 1.025, 64, 64), atmMat);
-scene.add(atmosphere);
-
-// ── China Highlight Overlay ──
-// Create a canvas texture with China territory highlighted
-function createChinaOverlayTexture() {
-  const canvas = document.createElement('canvas');
-  canvas.width = 2048;
-  canvas.height = 1024;
-  const ctx = canvas.getContext('2d');
-  ctx.clearRect(0, 0, 2048, 1024);
-
-  // China approximate polygon (longitude: -180 to 180 → x: 0 to 2048, latitude: -90 to 90 → y: 1024 to 0)
-  // lon: -180~180, lat: -90~90
-  function toXY(lon, lat) {
-    return [(lon + 180) / 360 * 2048, (90 - lat) / 180 * 1024];
-  }
-
-  // Simplified China border (key points)
-  const chinaBorder = [
-    [73, 40], [75, 42], [79, 44], [82, 45], [87, 49], [90, 49], [92, 47],
-    [96, 48], [98, 46], [100, 43], [101, 42], [104, 43], [107, 42],
-    [111, 44], [113, 45], [116, 45], [118, 44], [120, 44], [122, 43],
-    [124, 42], [126, 43], [128, 44], [130, 44], [131, 43], [132, 42],
-    [134, 41], [135, 40], [134, 38], [132, 37], [131, 35], [130, 32],
-    [129, 31], [128, 30], [127, 29], [126, 27], [124, 26], [123, 25],
-    [122, 24], [121, 23], [120, 22], [119, 21], [118, 20], [116, 21],
-    [115, 22], [114, 23], [113, 24], [112, 25], [111, 26], [110, 27],
-    [109, 28], [108, 29], [107, 30], [106, 31], [105, 32], [104, 33],
-    [103, 34], [102, 35], [101, 36], [100, 37], [99, 38], [98, 39],
-    [97, 40], [96, 41], [95, 42], [94, 43], [93, 44], [92, 45],
-    [91, 46], [90, 47], [89, 48], [88, 47], [87, 46], [86, 45],
-    [85, 44], [84, 43], [83, 42], [82, 41], [81, 40], [80, 39],
-    [79, 38], [78, 37], [77, 36], [76, 35], [75, 34], [74, 33],
-    [73, 32], [73, 40] // back to start
-  ].map(p => toXY(p[0], p[1]));
-
-  // Draw glowing fill
-  ctx.beginPath();
-  ctx.moveTo(chinaBorder[0][0], chinaBorder[0][1]);
-  for (let i = 1; i < chinaBorder.length; i++) {
-    ctx.lineTo(chinaBorder[i][0], chinaBorder[i][1]);
-  }
-  ctx.closePath();
-  
-  // Glow fill
-  const grad = ctx.createRadialGradient(1024, 512, 50, 1024, 512, 400);
-  grad.addColorStop(0, 'rgba(245, 158, 11, 0.15)');
-  grad.addColorStop(0.5, 'rgba(245, 158, 11, 0.08)');
-  grad.addColorStop(1, 'rgba(245, 158, 11, 0)');
-  ctx.fillStyle = grad;
-  ctx.fill();
-
-  // Draw border glow
-  ctx.strokeStyle = 'rgba(245, 158, 11, 0.6)';
-  ctx.lineWidth = 3;
-  ctx.shadowColor = 'rgba(245, 158, 11, 0.8)';
-  ctx.shadowBlur = 20;
-  ctx.beginPath();
-  ctx.moveTo(chinaBorder[0][0], chinaBorder[0][1]);
-  for (let i = 1; i < chinaBorder.length; i++) {
-    ctx.lineTo(chinaBorder[i][0], chinaBorder[i][1]);
-  }
-  ctx.closePath();
-  ctx.stroke();
-
-  // Inner glow overlay (second pass)
-  ctx.shadowBlur = 0;
-  ctx.fillStyle = 'rgba(245, 158, 11, 0.04)';
-  ctx.fill();
-
-  // Add city dots
-  const cities = [
-    ['Beijing', 116.4, 39.9, 6],
-    ['Shanghai', 121.5, 31.2, 5],
-    ['Yiwu', 120.1, 29.3, 4],
-    ['Guangzhou', 113.3, 23.1, 5],
-    ['Shenzhen', 114.1, 22.5, 4],
-  ];
-  cities.forEach(([name, lon, lat, size]) => {
-    const [x, y] = toXY(lon, lat);
-    const grad2 = ctx.createRadialGradient(x, y, 0, x, y, size * 3);
-    grad2.addColorStop(0, `rgba(245, 158, 11, 0.9)`);
-    grad2.addColorStop(0.5, `rgba(245, 158, 11, 0.3)`);
-    grad2.addColorStop(1, `rgba(245, 158, 11, 0)`);
-    ctx.fillStyle = grad2;
-    ctx.fillRect(x - size * 3, y - size * 3, size * 6, size * 6);
-  });
-
-  return canvas;
-}
-
-const chinaCanvas = createChinaOverlayTexture();
-const chinaTexture = new THREE.CanvasTexture(chinaCanvas);
-chinaTexture.anisotropy = renderer.capabilities.getMaxAnisotropy();
-
-const chinaMat = new THREE.MeshBasicMaterial({
-  map: chinaTexture,
-  transparent: true,
-  opacity: 0,
-  blending: THREE.AdditiveBlending,
-  depthWrite: false,
-  side: THREE.FrontSide,
-});
-const chinaOverlay = new THREE.Mesh(new THREE.SphereGeometry(EARTH_RADIUS * 1.001, 96, 96), chinaMat);
-scene.add(chinaOverlay);
-
-// ── Stars ──
-const starGeom = new THREE.BufferGeometry();
-const starCount = 4000;
-const pos = new Float32Array(starCount * 3);
-const sizes = new Float32Array(starCount);
-for (let i = 0; i < starCount; i++) {
-  const theta = Math.random() * Math.PI * 2;
-  const phi = Math.acos(2 * Math.random() - 1);
-  const r = 30 + Math.random() * 70;
-  pos[i*3] = r * Math.sin(phi) * Math.cos(theta);
-  pos[i*3+1] = r * Math.sin(phi) * Math.sin(theta);
-  pos[i*3+2] = r * Math.cos(phi);
-  sizes[i] = 0.05 + Math.random() * 0.15;
-}
-starGeom.setAttribute('position', new THREE.BufferAttribute(pos, 3));
-starGeom.setAttribute('size', new THREE.BufferAttribute(sizes, 1));
-const starMat = new THREE.PointsMaterial({
-  color: 0xffffff,
-  size: 0.12,
-  transparent: true,
-  opacity: 0.7,
-  blending: THREE.AdditiveBlending,
-});
-const stars = new THREE.Points(starGeom, starMat);
-scene.add(stars);
-
-// ── Scroll Animation State ──
-const state = {
-  earthY: 0,          // Earth rotation Y (0 = default globe showing Atlantic/Africa)
-  camX: 0,
-  camY: 0.3,
-  camZ: 3.5,
-  chinaOpacity: 0,
-  earthOpacity: 1,
-  starOpacity: 0.7,
-};
-
 gsap.registerPlugin(ScrollTrigger);
 
-const tl = gsap.timeline({
-  scrollTrigger: {
-    trigger: '#content',
-    start: 'top top',
-    end: 'bottom bottom',
-    scrub: 0.6,
-  }
-});
-
-// Phase 0-0.25: Slow rotation, Earth slightly turns
-tl.to(state, {
-  earthY: 1.8,
-  duration: 0.25,
-  ease: 'power1.inOut',
-}, 0);
-
-// Phase 0.25-0.45: Turn toward China (China at ~105°E = rotation Y of about 2.9 rad)
-tl.to(state, {
-  earthY: 2.9,
-  camZ: 3.0,
-  duration: 0.2,
-  ease: 'power2.inOut',
-}, 0.25);
-
-// Phase 0.45-0.55: China come into view, overlay fades in
-tl.to(state, {
-  earthY: 3.0,
-  camZ: 2.6,
-  duration: 0.1,
-  ease: 'power2.inOut',
-}, 0.45);
-
-tl.to(state, {
-  chinaOpacity: 0.9,
-  duration: 0.08,
-  ease: 'power2.out',
-}, 0.5);
-
-// Phase 0.55-0.62: Hold China, overlay at full
-tl.to(state, {
-  camZ: 2.4,
-  duration: 0.07,
-  ease: 'power1.out',
-}, 0.55);
-
-// Phase 0.62-0.7: Begin fade out Earth
-tl.to(state, {
-  chinaOpacity: 0.7,
-  earthOpacity: 0.9,
-  duration: 0.08,
-  ease: 'power1.in',
-}, 0.62);
-
-// Phase 0.7-0.8: Earth fades away
-tl.to(state, {
-  earthOpacity: 0,
-  chinaOpacity: 0,
-  starOpacity: 0.2,
-  camZ: 4,
-  duration: 0.1,
-  ease: 'power2.in',
-}, 0.7);
-
-// Phase 0.8+: Stars dim, camera settles
-tl.to(state, {
-  starOpacity: 0,
-  duration: 0.1,
-}, 0.8);
-
-// ── Section Visibility ──
 const sections = document.querySelectorAll('.step');
 sections.forEach((section, i) => {
   ScrollTrigger.create({
@@ -567,35 +300,6 @@ ScrollTrigger.create({
   end: 'top center',
   onEnter: () => document.getElementById('footer-step').style.opacity = 1,
   onLeaveBack: () => document.getElementById('footer-step').style.opacity = 0,
-});
-
-// ── Animation Loop ──
-function animate() {
-  requestAnimationFrame(animate);
-  
-  // Auto slow rotation when not controlled by scroll
-  // (GSAP overrides this during scroll)
-  
-  earth.rotation.y = state.earthY;
-  chinaOverlay.material.opacity = state.chinaOpacity;
-  earth.material.opacity = state.earthOpacity;
-  earth.material.transparent = state.earthOpacity < 1;
-  stars.material.opacity = state.starOpacity;
-  
-  camera.position.set(state.camX, state.camY, state.camZ);
-  camera.lookAt(0, 0, 0);
-
-  renderer.render(scene, camera);
-}
-animate();
-
-// ── Resize ──
-window.addEventListener('resize', () => {
-  const w = window.innerWidth;
-  const h = window.innerHeight;
-  camera.aspect = w / h;
-  camera.updateProjectionMatrix();
-  renderer.setSize(w, h);
 });
 
 console.log('Anjubiz — scroll to explore');
