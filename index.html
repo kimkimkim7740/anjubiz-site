@@ -300,7 +300,7 @@ scene.add(rim);
 const EARTH_RADIUS = 1;
 const textureLoader = new THREE.TextureLoader();
 
-const earthMap = textureLoader.load('https://unpkg.com/three-globe/example/img/earth-blue-marble.jpg');
+const earthMap = textureLoader.load('earth-texture.png');
 const earthMat = new THREE.MeshPhongMaterial({
   map: earthMap,
   specular: new THREE.Color(0x222244),
