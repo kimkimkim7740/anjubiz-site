@@ -9,24 +9,36 @@
   body {
     background: #05080c;
     overflow: hidden;
+    width: 100vw; height: 100vh;
   }
-  #canvas-container {
+  #container {
     position: fixed;
     top: 0; left: 0;
     width: 100vw; height: 100vh;
-    z-index: 0;
   }
-  #canvas-container iframe {
-    width: 100%;
-    height: 100%;
-    border: none;
+  #container canvas {
+    display: block;
   }
 </style>
 </head>
 <body>
-<div id="canvas-container">
-  <iframe src="https://my.spline.design/nexbotrobotcharacterconcept-s2vrr5vfpOB2SvSPmvw4eySw/" allow="autoplay; fullscreen"></iframe>
-</div>
+<div id="container"></div>
+<script type="module">
+import { Application } from 'https://unpkg.com/@splinetool/runtime@1.9.82/build/runtime.js';
 
+const canvas = document.createElement('canvas');
+document.getElementById('container').appendChild(canvas);
+
+const spline = new Application(canvas);
+spline
+  .load('https://my.spline.design/nexbotrobotcharacterconcept-s2vrr5vfpOB2SvSPmvw4eySw/')
+  .then(() => {
+    console.log('Spline loaded');
+  })
+  .catch(err => {
+    console.error('Spline error:', err);
+    document.getElementById('container').innerHTML = '<p style="color:white;padding:2rem;">Failed to load: ' + err.message + '</p>';
+  });
+</script>
 </body>
 </html>
