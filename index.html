@@ -1,0 +1,604 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Anjubiz — China Product Sourcing Hub</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    background: #05080c;
+    color: #fff;
+    overflow-x: hidden;
+  }
+  #canvas-container {
+    position: fixed;
+    top: 0; left: 0;
+    width: 100vw; height: 100vh;
+    z-index: 0;
+    pointer-events: none;
+  }
+  #content {
+    position: relative;
+    z-index: 1;
+    pointer-events: none;
+  }
+  #content * { pointer-events: auto; }
+
+  .step {
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    padding: 4rem;
+    text-align: center;
+    opacity: 0;
+    transition: opacity 0.6s;
+  }
+  .step.visible { opacity: 1; }
+
+  .step h1 {
+    font-size: clamp(2rem, 6vw, 5rem);
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    line-height: 1.1;
+  }
+  .step h2 {
+    font-size: clamp(1.5rem, 3vw, 3rem);
+    font-weight: 600;
+    letter-spacing: -0.01em;
+    line-height: 1.2;
+  }
+  .step p {
+    font-size: clamp(1rem, 1.5vw, 1.25rem);
+    color: rgba(255,255,255,0.7);
+    max-width: 600px;
+    margin-top: 1rem;
+    line-height: 1.6;
+  }
+  .step .subtitle {
+    font-size: clamp(0.75rem, 1vw, 0.875rem);
+    text-transform: uppercase;
+    letter-spacing: 0.2em;
+    color: rgba(255,255,255,0.4);
+    margin-bottom: 0.75rem;
+  }
+  .step .highlight { color: #f59e0b; }
+
+  #step-0 .scroll-hint {
+    position: absolute;
+    bottom: 2rem;
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: 0.7rem;
+    color: rgba(255,255,255,0.25);
+    letter-spacing: 0.25em;
+    animation: bounce 2.5s infinite;
+  }
+  @keyframes bounce {
+    0%,100% { transform: translateX(-50%) translateY(0); }
+    50% { transform: translateX(-50%) translateY(10px); }
+  }
+
+  #step-1 h2, #step-2 h2 { text-shadow: 0 0 60px rgba(245,158,11,0.15); }
+
+  #step-3 {
+    background: linear-gradient(to top, rgba(5,8,12,1) 20%, transparent 60%);
+  }
+  .factory-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 0.75rem;
+    max-width: 900px;
+    width: 100%;
+    margin-top: 2rem;
+  }
+  .factory-grid img {
+    width: 100%;
+    height: 180px;
+    object-fit: cover;
+    border-radius: 8px;
+    opacity: 0.85;
+    transition: opacity 0.3s, transform 0.3s;
+    cursor: pointer;
+  }
+  .factory-grid img:hover { opacity: 1; transform: scale(1.02); }
+
+  #step-4 {
+    background: rgba(5,8,12,0.9);
+  }
+  .product-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 1rem;
+    max-width: 1000px;
+    width: 100%;
+    margin-top: 2rem;
+  }
+  .product-card {
+    background: rgba(255,255,255,0.04);
+    border: 1px solid rgba(255,255,255,0.06);
+    border-radius: 12px;
+    padding: 0.75rem;
+    text-align: left;
+    transition: transform 0.3s, background 0.3s;
+    cursor: pointer;
+  }
+  .product-card:hover {
+    transform: translateY(-3px);
+    background: rgba(255,255,255,0.08);
+  }
+  .product-card img {
+    width: 100%;
+    height: 150px;
+    object-fit: cover;
+    border-radius: 8px;
+    margin-bottom: 0.5rem;
+  }
+  .product-card h3 { font-size: 0.9rem; font-weight: 600; }
+  .product-card p { font-size: 0.8rem; color: rgba(255,255,255,0.5); margin-top: 0.15rem; }
+
+  #step-5 { background: rgba(5,8,12,0.95); }
+  .contact-info {
+    display: flex;
+    gap: 2rem;
+    margin-top: 2rem;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+  .contact-info a {
+    color: #f59e0b;
+    text-decoration: none;
+    font-size: 1rem;
+    transition: opacity 0.2s;
+  }
+  .contact-info a:hover { opacity: 0.7; }
+
+  #footer-step {
+    height: 20vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    opacity: 0;
+  }
+  #footer-step p { font-size: 0.7rem; color: rgba(255,255,255,0.2); }
+
+  @media (max-width: 768px) {
+    .step { padding: 2rem; }
+    .factory-grid { grid-template-columns: 1fr 1fr; }
+    .product-grid { grid-template-columns: 1fr 1fr; }
+    .factory-grid img { height: 120px; }
+    .contact-info { flex-direction: column; gap: 1rem; }
+  }
+</style>
+</head>
+<body>
+
+<div id="canvas-container"></div>
+
+<div id="content">
+  <section class="step" id="step-0" style="justify-content:flex-end; padding-bottom:20vh;">
+    <p class="subtitle">Anjubiz</p>
+    <h1>China Product<br><span class="highlight">Sourcing Hub</span></h1>
+    <p style="max-width:480px;">We discover useful China-made products for retailers, wholesalers, and online sellers worldwide.</p>
+    <div class="scroll-hint">↓ SCROLL</div>
+  </section>
+
+  <section class="step" id="step-1" style="justify-content:center;">
+    <p class="subtitle">Your Sourcing Partner</p>
+    <h2>From <span class="highlight">China</span> to the World</h2>
+    <p>Yiwu · Guangzhou · Shenzhen · Shanghai — four major hubs, one reliable partner.</p>
+  </section>
+
+  <section class="step" id="step-2" style="justify-content:flex-start; padding-top:20vh;">
+    <p class="subtitle">Headquarters</p>
+    <h2>Rooted in <span class="highlight">Yiwu</span></h2>
+    <p>The world's largest wholesale market — 2M+ products, 24/7 access.</p>
+  </section>
+
+  <section class="step" id="step-3">
+    <h2>See Where Products Are Made</h2>
+    <p>Partner factories from raw materials to finished goods.</p>
+    <div class="factory-grid">
+      <img src="https://images.unsplash.com/photo-1581091226825-a6a2a5aee158?w=400&h=300&fit=crop" loading="lazy">
+      <img src="https://images.unsplash.com/photo-1567789884554-0b844b597180?w=400&h=300&fit=crop" loading="lazy">
+      <img src="https://images.unsplash.com/photo-1504328345606-18bbc8c9d7d1?w=400&h=300&fit=crop" loading="lazy">
+      <img src="https://images.unsplash.com/photo-1558618666-fcd25c85f82e?w=400&h=300&fit=crop" loading="lazy">
+      <img src="https://images.unsplash.com/photo-1565538810643-b5bdb714032a?w=400&h=300&fit=crop" loading="lazy">
+      <img src="https://images.unsplash.com/photo-1541888946425-d81bb69cadd8?w=400&h=300&fit=crop" loading="lazy">
+    </div>
+  </section>
+
+  <section class="step" id="step-4">
+    <h2>Product Categories</h2>
+    <p>From trending gadgets to everyday essentials.</p>
+    <div class="product-grid">
+      <div class="product-card">
+        <img src="https://images.unsplash.com/photo-1590005354161-6f14e7d1f7e2?w=300&h=200&fit=crop" loading="lazy">
+        <h3>Home & Living</h3>
+        <p>Storage, organization, decor</p>
+      </div>
+      <div class="product-card">
+        <img src="https://images.unsplash.com/photo-1556909114-f6e7ad7d3136?w=300&h=200&fit=crop" loading="lazy">
+        <h3>Kitchen & Dining</h3>
+        <p>Gadgets, tools, utensils</p>
+      </div>
+      <div class="product-card">
+        <img src="https://images.unsplash.com/photo-1601758228041-f3b2795255f1?w=300&h=200&fit=crop" loading="lazy">
+        <h3>Pet Supplies</h3>
+        <p>Toys, beds, feeding</p>
+      </div>
+      <div class="product-card">
+        <img src="https://images.unsplash.com/photo-1586864387967-d02ef85d93e8?w=300&h=200&fit=crop" loading="lazy">
+        <h3>Tools & Hardware</h3>
+        <p>DIY, repair, maintenance</p>
+      </div>
+      <div class="product-card">
+        <img src="https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?w=300&h=200&fit=crop" loading="lazy">
+        <h3>Fitness & Outdoors</h3>
+        <p>Home gym, camping, sports</p>
+      </div>
+      <div class="product-card">
+        <img src="https://images.unsplash.com/photo-1556228578-0d85b1a4d571?w=300&h=200&fit=crop" loading="lazy">
+        <h3>Electronics</h3>
+        <p>Accessories, gadgets, audio</p>
+      </div>
+    </div>
+  </section>
+
+  <section class="step" id="step-5">
+    <h2>Start Sourcing Today</h2>
+    <p>Send us your product list — we'll quote within 24 hours.</p>
+    <div class="contact-info">
+      <a href="mailto:hello@anjubiz.com">✉ hello@anjubiz.com</a>
+      <a href="#">◇ WhatsApp</a>
+      <a href="#">● LinkedIn</a>
+      <a href="#">◆ Instagram</a>
+    </div>
+  </section>
+
+  <section id="footer-step">
+    <p>© 2026 Anjubiz — China Product Sourcing Hub</p>
+  </section>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js"></script>
+
+<script>
+// ──────── Scene Setup ────────
+const container = document.getElementById('canvas-container');
+const scene = new THREE.Scene();
+const camera = new THREE.PerspectiveCamera(40, window.innerWidth / window.innerHeight, 0.1, 200);
+camera.position.set(0, 0.3, 3.5);
+
+const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: false });
+renderer.setSize(window.innerWidth, window.innerHeight);
+renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+renderer.toneMapping = THREE.ACESFilmicToneMapping;
+renderer.toneMappingExposure = 1.0;
+renderer.outputEncoding = THREE.sRGBEncoding;
+container.appendChild(renderer.domElement);
+
+// ──────── Lights ────────
+const ambient = new THREE.AmbientLight(0x222244, 0.6);
+scene.add(ambient);
+const sun = new THREE.DirectionalLight(0xffeedd, 1.8);
+sun.position.set(5, 3, 8);
+scene.add(sun);
+const fill = new THREE.DirectionalLight(0x4488ff, 0.4);
+fill.position.set(-4, -1, -3);
+scene.add(fill);
+const rim = new THREE.DirectionalLight(0x8888ff, 0.3);
+rim.position.set(-2, 4, -5);
+scene.add(rim);
+
+// ──────── Earth ────────
+const EARTH_RADIUS = 1;
+const textureLoader = new THREE.TextureLoader();
+
+const earthMap = textureLoader.load('https://unpkg.com/three-globe/example/img/earth-blue-marble.jpg');
+const earthMat = new THREE.MeshPhongMaterial({
+  map: earthMap,
+  specular: new THREE.Color(0x222244),
+  shininess: 25,
+  emissive: new THREE.Color(0x000022),
+  emissiveIntensity: 0.05,
+});
+const earth = new THREE.Mesh(new THREE.SphereGeometry(EARTH_RADIUS, 96, 96), earthMat);
+scene.add(earth);
+
+// ── Atmosphere glow ──
+const atmMat = new THREE.ShaderMaterial({
+  vertexShader: `
+    varying vec3 vNormal;
+    void main() {
+      vNormal = normalize(normalMatrix * normal);
+      gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+    }
+  `,
+  fragmentShader: `
+    varying vec3 vNormal;
+    void main() {
+      float intensity = pow(0.72 - dot(vNormal, vec3(0.0, 0.0, 1.0)), 2.5);
+      gl_FragColor = vec4(0.3, 0.6, 1.0, intensity * 0.6);
+    }
+  `,
+  side: THREE.FrontSide,
+  blending: THREE.AdditiveBlending,
+  transparent: true,
+});
+const atmosphere = new THREE.Mesh(new THREE.SphereGeometry(EARTH_RADIUS * 1.025, 64, 64), atmMat);
+scene.add(atmosphere);
+
+// ── China Highlight Overlay ──
+// Create a canvas texture with China territory highlighted
+function createChinaOverlayTexture() {
+  const canvas = document.createElement('canvas');
+  canvas.width = 2048;
+  canvas.height = 1024;
+  const ctx = canvas.getContext('2d');
+  ctx.clearRect(0, 0, 2048, 1024);
+
+  // China approximate polygon (longitude: -180 to 180 → x: 0 to 2048, latitude: -90 to 90 → y: 1024 to 0)
+  // lon: -180~180, lat: -90~90
+  function toXY(lon, lat) {
+    return [(lon + 180) / 360 * 2048, (90 - lat) / 180 * 1024];
+  }
+
+  // Simplified China border (key points)
+  const chinaBorder = [
+    [73, 40], [75, 42], [79, 44], [82, 45], [87, 49], [90, 49], [92, 47],
+    [96, 48], [98, 46], [100, 43], [101, 42], [104, 43], [107, 42],
+    [111, 44], [113, 45], [116, 45], [118, 44], [120, 44], [122, 43],
+    [124, 42], [126, 43], [128, 44], [130, 44], [131, 43], [132, 42],
+    [134, 41], [135, 40], [134, 38], [132, 37], [131, 35], [130, 32],
+    [129, 31], [128, 30], [127, 29], [126, 27], [124, 26], [123, 25],
+    [122, 24], [121, 23], [120, 22], [119, 21], [118, 20], [116, 21],
+    [115, 22], [114, 23], [113, 24], [112, 25], [111, 26], [110, 27],
+    [109, 28], [108, 29], [107, 30], [106, 31], [105, 32], [104, 33],
+    [103, 34], [102, 35], [101, 36], [100, 37], [99, 38], [98, 39],
+    [97, 40], [96, 41], [95, 42], [94, 43], [93, 44], [92, 45],
+    [91, 46], [90, 47], [89, 48], [88, 47], [87, 46], [86, 45],
+    [85, 44], [84, 43], [83, 42], [82, 41], [81, 40], [80, 39],
+    [79, 38], [78, 37], [77, 36], [76, 35], [75, 34], [74, 33],
+    [73, 32], [73, 40] // back to start
+  ].map(p => toXY(p[0], p[1]));
+
+  // Draw glowing fill
+  ctx.beginPath();
+  ctx.moveTo(chinaBorder[0][0], chinaBorder[0][1]);
+  for (let i = 1; i < chinaBorder.length; i++) {
+    ctx.lineTo(chinaBorder[i][0], chinaBorder[i][1]);
+  }
+  ctx.closePath();
+  
+  // Glow fill
+  const grad = ctx.createRadialGradient(1024, 512, 50, 1024, 512, 400);
+  grad.addColorStop(0, 'rgba(245, 158, 11, 0.15)');
+  grad.addColorStop(0.5, 'rgba(245, 158, 11, 0.08)');
+  grad.addColorStop(1, 'rgba(245, 158, 11, 0)');
+  ctx.fillStyle = grad;
+  ctx.fill();
+
+  // Draw border glow
+  ctx.strokeStyle = 'rgba(245, 158, 11, 0.6)';
+  ctx.lineWidth = 3;
+  ctx.shadowColor = 'rgba(245, 158, 11, 0.8)';
+  ctx.shadowBlur = 20;
+  ctx.beginPath();
+  ctx.moveTo(chinaBorder[0][0], chinaBorder[0][1]);
+  for (let i = 1; i < chinaBorder.length; i++) {
+    ctx.lineTo(chinaBorder[i][0], chinaBorder[i][1]);
+  }
+  ctx.closePath();
+  ctx.stroke();
+
+  // Inner glow overlay (second pass)
+  ctx.shadowBlur = 0;
+  ctx.fillStyle = 'rgba(245, 158, 11, 0.04)';
+  ctx.fill();
+
+  // Add city dots
+  const cities = [
+    ['Beijing', 116.4, 39.9, 6],
+    ['Shanghai', 121.5, 31.2, 5],
+    ['Yiwu', 120.1, 29.3, 4],
+    ['Guangzhou', 113.3, 23.1, 5],
+    ['Shenzhen', 114.1, 22.5, 4],
+  ];
+  cities.forEach(([name, lon, lat, size]) => {
+    const [x, y] = toXY(lon, lat);
+    const grad2 = ctx.createRadialGradient(x, y, 0, x, y, size * 3);
+    grad2.addColorStop(0, `rgba(245, 158, 11, 0.9)`);
+    grad2.addColorStop(0.5, `rgba(245, 158, 11, 0.3)`);
+    grad2.addColorStop(1, `rgba(245, 158, 11, 0)`);
+    ctx.fillStyle = grad2;
+    ctx.fillRect(x - size * 3, y - size * 3, size * 6, size * 6);
+  });
+
+  return canvas;
+}
+
+const chinaCanvas = createChinaOverlayTexture();
+const chinaTexture = new THREE.CanvasTexture(chinaCanvas);
+chinaTexture.anisotropy = renderer.capabilities.getMaxAnisotropy();
+
+const chinaMat = new THREE.MeshBasicMaterial({
+  map: chinaTexture,
+  transparent: true,
+  opacity: 0,
+  blending: THREE.AdditiveBlending,
+  depthWrite: false,
+  side: THREE.FrontSide,
+});
+const chinaOverlay = new THREE.Mesh(new THREE.SphereGeometry(EARTH_RADIUS * 1.001, 96, 96), chinaMat);
+scene.add(chinaOverlay);
+
+// ── Stars ──
+const starGeom = new THREE.BufferGeometry();
+const starCount = 4000;
+const pos = new Float32Array(starCount * 3);
+const sizes = new Float32Array(starCount);
+for (let i = 0; i < starCount; i++) {
+  const theta = Math.random() * Math.PI * 2;
+  const phi = Math.acos(2 * Math.random() - 1);
+  const r = 30 + Math.random() * 70;
+  pos[i*3] = r * Math.sin(phi) * Math.cos(theta);
+  pos[i*3+1] = r * Math.sin(phi) * Math.sin(theta);
+  pos[i*3+2] = r * Math.cos(phi);
+  sizes[i] = 0.05 + Math.random() * 0.15;
+}
+starGeom.setAttribute('position', new THREE.BufferAttribute(pos, 3));
+starGeom.setAttribute('size', new THREE.BufferAttribute(sizes, 1));
+const starMat = new THREE.PointsMaterial({
+  color: 0xffffff,
+  size: 0.12,
+  transparent: true,
+  opacity: 0.7,
+  blending: THREE.AdditiveBlending,
+});
+const stars = new THREE.Points(starGeom, starMat);
+scene.add(stars);
+
+// ── Scroll Animation State ──
+const state = {
+  earthY: 0,          // Earth rotation Y (0 = default globe showing Atlantic/Africa)
+  camX: 0,
+  camY: 0.3,
+  camZ: 3.5,
+  chinaOpacity: 0,
+  earthOpacity: 1,
+  starOpacity: 0.7,
+};
+
+gsap.registerPlugin(ScrollTrigger);
+
+const tl = gsap.timeline({
+  scrollTrigger: {
+    trigger: '#content',
+    start: 'top top',
+    end: 'bottom bottom',
+    scrub: 0.6,
+  }
+});
+
+// Phase 0-0.25: Slow rotation, Earth slightly turns
+tl.to(state, {
+  earthY: 1.8,
+  duration: 0.25,
+  ease: 'power1.inOut',
+}, 0);
+
+// Phase 0.25-0.45: Turn toward China (China at ~105°E = rotation Y of about 2.9 rad)
+tl.to(state, {
+  earthY: 2.9,
+  camZ: 3.0,
+  duration: 0.2,
+  ease: 'power2.inOut',
+}, 0.25);
+
+// Phase 0.45-0.55: China come into view, overlay fades in
+tl.to(state, {
+  earthY: 3.0,
+  camZ: 2.6,
+  duration: 0.1,
+  ease: 'power2.inOut',
+}, 0.45);
+
+tl.to(state, {
+  chinaOpacity: 0.9,
+  duration: 0.08,
+  ease: 'power2.out',
+}, 0.5);
+
+// Phase 0.55-0.62: Hold China, overlay at full
+tl.to(state, {
+  camZ: 2.4,
+  duration: 0.07,
+  ease: 'power1.out',
+}, 0.55);
+
+// Phase 0.62-0.7: Begin fade out Earth
+tl.to(state, {
+  chinaOpacity: 0.7,
+  earthOpacity: 0.9,
+  duration: 0.08,
+  ease: 'power1.in',
+}, 0.62);
+
+// Phase 0.7-0.8: Earth fades away
+tl.to(state, {
+  earthOpacity: 0,
+  chinaOpacity: 0,
+  starOpacity: 0.2,
+  camZ: 4,
+  duration: 0.1,
+  ease: 'power2.in',
+}, 0.7);
+
+// Phase 0.8+: Stars dim, camera settles
+tl.to(state, {
+  starOpacity: 0,
+  duration: 0.1,
+}, 0.8);
+
+// ── Section Visibility ──
+const sections = document.querySelectorAll('.step');
+sections.forEach((section, i) => {
+  ScrollTrigger.create({
+    trigger: section,
+    start: 'top bottom-=5%',
+    end: 'bottom center+=10%',
+    onEnter: () => section.classList.add('visible'),
+    onLeave: () => { if (i < sections.length - 1 && !sections[i+1].classList.contains('visible')) section.classList.remove('visible'); },
+    onEnterBack: () => section.classList.add('visible'),
+    onLeaveBack: () => { if (i > 0 && !sections[i-1].classList.contains('visible')) section.classList.remove('visible'); },
+  });
+});
+document.getElementById('step-0').classList.add('visible');
+
+ScrollTrigger.create({
+  trigger: '#footer-step',
+  start: 'top bottom-=25%',
+  end: 'top center',
+  onEnter: () => document.getElementById('footer-step').style.opacity = 1,
+  onLeaveBack: () => document.getElementById('footer-step').style.opacity = 0,
+});
+
+// ── Animation Loop ──
+function animate() {
+  requestAnimationFrame(animate);
+  
+  // Auto slow rotation when not controlled by scroll
+  // (GSAP overrides this during scroll)
+  
+  earth.rotation.y = state.earthY;
+  chinaOverlay.material.opacity = state.chinaOpacity;
+  earth.material.opacity = state.earthOpacity;
+  earth.material.transparent = state.earthOpacity < 1;
+  stars.material.opacity = state.starOpacity;
+  
+  camera.position.set(state.camX, state.camY, state.camZ);
+  camera.lookAt(0, 0, 0);
+
+  renderer.render(scene, camera);
+}
+animate();
+
+// ── Resize ──
+window.addEventListener('resize', () => {
+  const w = window.innerWidth;
+  const h = window.innerHeight;
+  camera.aspect = w / h;
+  camera.updateProjectionMatrix();
+  renderer.setSize(w, h);
+});
+
+console.log('Anjubiz — scroll to explore');
+</script>
+</body>
+</html>
